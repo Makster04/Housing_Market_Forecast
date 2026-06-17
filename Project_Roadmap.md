@@ -30,9 +30,10 @@
 
 **Goals**:
 - Transform raw signals to **YoY growth** (stationary, seasonally controlled) and **standardize within each metro** (z-score over its own history)
-- **Demand_Index** = mean of 8 z-scored signals: pending ratio, pending YoY, *−*days-on-market, price-increased share, employment YoY, population YoY, net-migration rate, *−*mortgage rate
-- **Supply_Index** = mean of 5 z-scored signals: active/new/total listing YoY, price-reduced share, permits per 1k
-- **Net_Hotness** = Demand_Index − Supply_Index; scale all three to 0–100 across the panel
+- **Demand_Index_z** = mean of 8 z-scored signals: pending ratio, pending YoY, *−*days-on-market, price-increased share, employment YoY, population YoY, net-migration rate, *−*mortgage rate
+- **Supply_Index_z** = mean of 5 z-scored signals: active/new/total listing YoY, price-reduced share, permits per 1k
+- **Net_Hotness_z** = Demand_Index_z − Supply_Index_z (z-score scale, centered on 0, ≈ −3 to +3)
+- Rescale all three to **0–100** as the headline `Demand_Index`, `Supply_Index`, `Net_Hotness` columns — `100 × (z − min) / (max − min)` across the panel — for dashboards and regime thresholds; retain the z-score versions as the `_z` columns for modeling
 - Invert days-on-market and mortgage rate (higher values weaken demand)
 
 **Visuals**:
@@ -64,7 +65,7 @@
 **Dataset Used**: index panel
 
 **Goals**:
-- Classify each metro-month from `Net_Hotness_0_100` thresholds → **Hot** (≥75) · **Balanced** (≥50) · **Cooling** (≥25) · **Buyer's Market** (<25)
+- Classify each metro-month from the `Net_Hotness` (0–100 headline) thresholds → **Hot** (≥75) · **Balanced** (≥50) · **Cooling** (≥25) · **Buyer's Market** (<25)
 - Tag the **Supply/Demand Quadrant** (each axis split at 50): Frozen, Buyer's/cooling, Hot, Active-but-balanced
 - These become the classification targets at each forecast horizon
 
@@ -93,7 +94,7 @@
 **Datasets Used**: leakage-safe model panel (features + t+1/t+3/t+6 targets)
 
 **Goals**:
-- Identify targets: `Demand_Index`, `Supply_Index` (and `Net_Hotness`) at 1/3/6-month horizons; model level and/or change
+- Identify targets: `Demand_Index_z`, `Supply_Index_z` (and `Net_Hotness_z`) at 1/3/6-month horizons; model level and/or change. Modeling uses the z-score scale, not the 0–100 headline columns
 - Match model to signal:
   - **Seasonal-naive / SARIMA / ETS**: per-metro baseline — the bar every model must beat
   - **VAR / pooled panel regression** (metro + month fixed effects): joint Supply+Demand forecasting given their co-dependence; the interpretation workhorse
